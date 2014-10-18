@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.android.bluetoothlegatt;
+package ru.perm.trubnikov.pulsecontrol;
 
 import android.app.Activity;
 import android.app.ListActivity;
@@ -46,6 +46,8 @@ public class DeviceScanActivity extends ListActivity {
     private BluetoothAdapter mBluetoothAdapter;
     private boolean mScanning;
     private Handler mHandler;
+
+
 
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.

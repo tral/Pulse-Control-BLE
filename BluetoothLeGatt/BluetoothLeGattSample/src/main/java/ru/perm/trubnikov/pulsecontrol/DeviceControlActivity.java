@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.android.bluetoothlegatt;
+package ru.perm.trubnikov.pulsecontrol;
 
 
 import android.app.Activity;
@@ -26,12 +26,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -40,16 +38,10 @@ import android.widget.Button;
 import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import com.example.android.bluetoothlegatt.R;
-
-import junit.framework.Test;
 
 /**
  * For a given BLE device, this Activity provides the user interface to connect, display data,
@@ -78,6 +70,19 @@ public class DeviceControlActivity extends Activity {
 
     private final String LIST_NAME = "NAME";
     private final String LIST_UUID = "UUID";
+    private PowerManager.WakeLock wl;
+
+    private long p_low;
+    private long p_high;
+
+    TextView pLowTxt;
+    TextView pHighTxt;
+    TextView mBigNumberTxt;
+    Button bLowPlus;
+    Button bLowMinus;
+    Button bHighPlus;
+    Button bHighMinus;
+
 
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -91,6 +96,8 @@ public class DeviceControlActivity extends Activity {
             }
             // Automatically connects to the device upon successful start-up initialization.
             mBluetoothLeService.connect(mDeviceAddress);
+
+
         }
 
         @Override
@@ -125,11 +132,12 @@ public class DeviceControlActivity extends Activity {
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
                 //Toast.makeText(context, intent.getStringExtra(BluetoothLeService.EXTRA_DATA), Toast.LENGTH_SHORT).show();
 
-                if (Integer.parseInt(intent.getStringExtra(BluetoothLeService.EXTRA_DATA)) < 80) {
+                if (Integer.parseInt(intent.getStringExtra(BluetoothLeService.EXTRA_DATA)) < p_low &&
+                        Integer.parseInt(intent.getStringExtra(BluetoothLeService.EXTRA_DATA)) > 15) {
                     playSound(2);
                 }
 
-                if (Integer.parseInt(intent.getStringExtra(BluetoothLeService.EXTRA_DATA)) > 85) {
+                if (Integer.parseInt(intent.getStringExtra(BluetoothLeService.EXTRA_DATA)) > p_high) {
                     playSound(1);
                 }
 
@@ -170,7 +178,6 @@ public class DeviceControlActivity extends Activity {
                     }*/
 
 
-
                     if (myGattCharacteristic != null) {
                         final BluetoothGattCharacteristic characteristic =
                                 myGattCharacteristic;
@@ -195,7 +202,7 @@ public class DeviceControlActivity extends Activity {
 
                     return false;
                 }
-    };
+            };
 
     private void clearUI() {
         mGattServicesList.setAdapter((SimpleExpandableListAdapter) null);
@@ -207,6 +214,60 @@ public class DeviceControlActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.gatt_services_characteristics);
 
+        DBHelper dbHelper = new DBHelper(DeviceControlActivity.this);
+        p_high = dbHelper.getSettingsParamInt("high_p");
+        p_low = dbHelper.getSettingsParamInt("low_p");
+        dbHelper.close();
+
+        pLowTxt = (TextView) findViewById(R.id.txtLow);
+        pHighTxt = (TextView) findViewById(R.id.txtHigh);
+
+        pLowTxt.setText(Long.toString(p_low));
+        pHighTxt.setText(Long.toString(p_high));
+
+        bLowPlus = (Button) findViewById(R.id.low_plus);
+        bLowMinus = (Button) findViewById(R.id.low_minus);
+        bHighPlus = (Button) findViewById(R.id.high_plus);
+        bHighMinus = (Button) findViewById(R.id.high_minus);
+
+        bLowMinus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                p_low--;
+                saveIntDb("low_p", p_low);
+                pLowTxt.setText(Long.toString(p_low));
+            }
+        });
+
+        bLowPlus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                p_low++;
+                saveIntDb("low_p", p_low);
+                pLowTxt.setText(Long.toString(p_low));
+            }
+        });
+
+
+        bHighMinus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                p_high--;
+                saveIntDb("high_p", p_high);
+                pHighTxt.setText(Long.toString(p_high));
+            }
+        });
+
+        bHighPlus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                p_high++;
+                saveIntDb("high_p", p_high);
+                pHighTxt.setText(Long.toString(p_high));
+            }
+        });
+
+
         final Intent intent = getIntent();
         mDeviceName = intent.getStringExtra(EXTRAS_DEVICE_NAME);
         mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
@@ -217,11 +278,22 @@ public class DeviceControlActivity extends Activity {
         mGattServicesList.setOnChildClickListener(servicesListClickListner);
         mConnectionState = (TextView) findViewById(R.id.connection_state);
         mDataField = (TextView) findViewById(R.id.data_value);
+        mBigNumberTxt = (TextView) findViewById(R.id.BigNumberTxt);
 
         getActionBar().setTitle(mDeviceName);
         getActionBar().setDisplayHomeAsUpEnabled(true);
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+
+        //PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        //wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "DoNjfdhotDimScreen");
+
+    }
+
+    protected void saveIntDb(String param, long val) {
+        DBHelper dbHelper = new DBHelper(DeviceControlActivity.this);
+        dbHelper.setSettingsParamInt(param, val);
+        dbHelper.close();
     }
 
     @Override
@@ -232,17 +304,22 @@ public class DeviceControlActivity extends Activity {
             final boolean result = mBluetoothLeService.connect(mDeviceAddress);
             Log.d(TAG, "Connect request result=" + result);
         }
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(mGattUpdateReceiver);
+        // Нам не надо, чтобы при паузе работа сервиса прекращалась
+        //unregisterReceiver(mGattUpdateReceiver);
+
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        unregisterReceiver(mGattUpdateReceiver);
         unbindService(mServiceConnection);
         mBluetoothLeService = null;
     }
@@ -252,7 +329,8 @@ public class DeviceControlActivity extends Activity {
         getMenuInflater().inflate(R.menu.gatt_services, menu);
         if (mConnected) {
             menu.findItem(R.id.menu_connect).setVisible(false);
-            menu.findItem(R.id.menu_disconnect).setVisible(true);
+            //menu.findItem(R.id.menu_disconnect).setVisible(true);
+            menu.findItem(R.id.menu_disconnect).setVisible(false);
         } else {
             menu.findItem(R.id.menu_connect).setVisible(true);
             menu.findItem(R.id.menu_disconnect).setVisible(false);
@@ -288,6 +366,7 @@ public class DeviceControlActivity extends Activity {
     private void displayData(String data) {
         if (data != null) {
             mDataField.setText(data);
+            mBigNumberTxt.setText(data);
         }
     }
 
@@ -333,7 +412,7 @@ public class DeviceControlActivity extends Activity {
 
                 if (uuid.equalsIgnoreCase(SampleGattAttributes.HEART_RATE_MEASUREMENT)) {
                     myGattCharacteristic = gattCharacteristic;
-                    Toast.makeText(this, "success!", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this, "success!", Toast.LENGTH_SHORT).show();
                 }
 
 

@@ -49,7 +49,9 @@
                   android:text="@string/disconnected"
                   android:textSize="18sp"/>
     </LinearLayout>
-    <LinearLayout android:orientation="horizontal"
+    <LinearLayout
+        android:id="@+id/DataLayout"
+        android:orientation="horizontal"
                   android:layout_width="match_parent"
                   android:layout_height="wrap_content"
                   android:layout_margin="10dp">
@@ -65,6 +67,121 @@
                   android:text="@string/no_data"
                   android:textSize="18sp"/>
     </LinearLayout>
+
+
+
+    <RelativeLayout
+        android:id="@+id/RelLayoutHigh"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/DataLayout"
+        android:orientation="horizontal"
+        android:paddingLeft="0dp"
+        android:paddingRight="0dp" >
+
+
+        <Button
+            android:id="@+id/low_plus"
+            android:layout_width="wrap_content"
+            android:layout_height="54dp"
+            android:text="+"
+
+            android:layout_alignParentRight="true"
+            />
+
+        <Button
+            android:id="@+id/low_minus"
+            android:layout_width="wrap_content"
+            android:layout_height="54dp"
+            android:text="-"
+
+            android:layout_alignParentLeft="true"
+            />
+
+        <TextView
+            android:id="@+id/txtLow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="50"
+            android:textSize="24sp"
+            android:gravity="center"
+            android:textStyle="bold"
+
+            android:layout_toLeftOf="@id/low_plus"
+            android:layout_toRightOf="@id/low_minus"
+            />
+
+    </RelativeLayout>
+
+
+    <LinearLayout
+        android:id="@+id/BigNumberLinear"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_below="@+id/RelLayoutHigh"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp">
+        <TextView
+            android:id="@+id/BigNumberTxt"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:text="-"
+            android:textSize="80sp"/>
+
+    </LinearLayout>
+
+
+    <RelativeLayout
+        android:id="@+id/RelLayoutLow"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/BigNumberLinear"
+        android:orientation="horizontal"
+        android:paddingLeft="0dp"
+        android:paddingRight="0dp" >
+
+
+        <Button
+            android:id="@+id/high_plus"
+            android:layout_width="wrap_content"
+            android:layout_height="54dp"
+            android:text="+"
+
+            android:layout_alignParentRight="true"
+            />
+
+        <Button
+            android:id="@+id/high_minus"
+            android:layout_width="wrap_content"
+            android:layout_height="54dp"
+            android:text="-"
+
+            android:layout_alignParentLeft="true"
+            />
+
+        <TextView
+            android:id="@+id/txtHigh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="50"
+            android:textSize="24sp"
+            android:gravity="center"
+            android:textStyle="bold"
+
+            android:layout_toLeftOf="@id/high_plus"
+            android:layout_toRightOf="@id/high_minus"
+            />
+
+    </RelativeLayout>
+
+
+
+
+
     <ExpandableListView android:id="@+id/gatt_services_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
